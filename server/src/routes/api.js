@@ -4,6 +4,6 @@ const {generateCode, getUserPrompts} = require("../controller/openaiController")
 const {authenticateToken } = require("../middleware/authentication")
 
 router.post("/generate", authenticateToken,generateCode);
-router.post("/history", authenticateToken, getUserPrompts)
-
+router.post("/history", authenticateToken, getUserPrompts);
+router.post("/generate/nonuser", generateCode); 
 module.exports = router 
