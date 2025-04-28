@@ -38,11 +38,11 @@ const login = async (req, res) => {
 
       res.json({ message: "Login successful", result: user });
   } catch (err) {
-      // If the error is "Invalid credentials" or "Invalid token", we respond with 401
+      
       if (err.message === "Invalid credentials" || err.message === "invalid token") {
           return res.status(401).json({ message: err.message });
       }
-      console.error(err); // For other errors, log it for debugging purposes
+      console.error(err); 
       res.status(500).json({ message: "Internal server error" });
   }
 };
