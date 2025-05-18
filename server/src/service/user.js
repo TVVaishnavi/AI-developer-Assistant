@@ -2,6 +2,8 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwtToken = require("../config/jwtToken");
 const jwt = require("jsonwebtoken");
+const io = require("../index");
+
 
 const getUsers = async () => {
   return await User.find({});
@@ -13,7 +15,11 @@ const getUserByEmail = async (email) => {
 
 const createUser = async ({ name, email, password }) => {
   const hashedPassword = await bcrypt.hash(password, 10);
-  return await new User({ name, email, password: hashedPassword }).save();
+  const newUser = await new User({name, email, password: hashedPassword}).save();
+  if(io){
+    io.emit("newUserCreated", {email: newUser.email, name: newUser.name});
+  }
+  return newUser;
 };
 
 const login = async (email, password) => {
@@ -29,12 +35,17 @@ const login = async (email, password) => {
     }
 
     const token = await jwtToken.generateToken(user);
+
+    if(io){
+      io.emit("userLoggedIn", {email: user.email, name: user.name});
+    }
     return {
       email: user.email,
       name: user.name,
       token,
     };
   } catch (error) {
+    console.error("Login error:", error);
     throw new Error(error.message || "Login failed");
   }
 };

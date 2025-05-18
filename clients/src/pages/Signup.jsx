@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import custom from '../hook/custom';
 import { useNavigate } from 'react-router-dom';
+import { auth, provider } from '../../firebase.config';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import api from '../context/api';
 
 function Signup() {
   const [username, setUsername] = useState('');
@@ -11,6 +14,35 @@ function Signup() {
   const [secpass, setSecpass] = useState('');
   const [conpass, setConpass] = useState('');
   const { signup } = custom();
+  const [loading, setLoading] = useState(false);
+
+
+  const handleGoogleSignIn = async() => {
+    try {
+      const result = await signInWithPopup(auth, provider);
+
+      const { email, displayName } = result.user;
+
+      const response = await api.post("/api/ai/google/login", {
+        email,
+        name: displayName,
+      });
+
+      const { token, status } = response.data;
+
+      if (status && token) {
+        await savetoken(token);
+        await saveuser({ name: displayName, email });
+        await finduser();
+        navigate('/');
+      } else {
+        alert("Google login failed.");
+      }
+    } catch (err) {
+      console.error("Google login error:", err.message);
+      alert("Google login failed.");
+    }
+  };
 
   const submit = async () => {
     if (emailIndicator) {
@@ -21,14 +53,14 @@ function Signup() {
           password: secpass
         };
         console.log(data);
-        
+
         const signupResponse = await signup(data);
-        console.log('Signup response:', signupResponse); 
-  
+        console.log('Signup response:', signupResponse);
+
         if (signupResponse.success) {
-          navigate('/login'); 
+          navigate('/login');
         } else {
-          alert(signupResponse.message);  
+          alert(signupResponse.message);
         }
       } else {
         setIndicator(true);
@@ -37,7 +69,7 @@ function Signup() {
       setIndicator(true);
     }
   };
-  
+
 
 
   const checkEmail = (email) => {
@@ -52,7 +84,7 @@ function Signup() {
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-gray-900 via-black to-gray-800">
       <div className="relative bg-gray-800 text-white rounded-2xl shadow-2xl p-10 w-full max-w-2xl">
 
-        
+
         <button
           onClick={() => navigate('/')}
           className="absolute top-4 right-4 text-gray-400 hover:text-purple-500 transition text-2xl font-bold"
@@ -127,6 +159,12 @@ function Signup() {
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition duration-300"
             >
               Submit
+            </button>
+            <h3>Or</h3>
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition duration-300">
+              Continue with Google
             </button>
             <p
               onClick={() => navigate('/login')}

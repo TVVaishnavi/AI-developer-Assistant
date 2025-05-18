@@ -1,12 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import  custom  from '../hook/custom'; 
+import custom from '../hook/custom';
+import { signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
+import { auth, provider } from '../../firebase.config';
+import api from '../context/api';
 
 function Login() {
   const [useremail, setUseremail] = useState('');
   const [password, setPassword] = useState('');
   const navigate = useNavigate();
   const { login } = custom();
+  const { savetoken, saveuser, finduser } = custom();
 
   const loginProcess = async (user, password) => {
     if (user === '' || password === '') {
@@ -16,6 +20,7 @@ function Login() {
       const success = await login(data);
       console.log("Login success status:", success);
       if (success) {
+        localStorage.setItem("userEmail", user);
         console.log("Navigating to home...");
         navigate('/');
       } else {
@@ -23,13 +28,47 @@ function Login() {
       }
     }
   };
-  
+
+  const handleGoogleSignIn = async () => {
+    try {
+      
+      const result = await signInWithPopup(auth, provider);
+      const idToken = await result.user.getIdToken();
+      const { email, displayName } = result.user;
+
+      const response = await api.post("/api/ai/google/login", {
+        idToken,
+      });
+
+      const { token, status } = response.data;
+
+      if (status && token) {
+        await savetoken(token);
+        await saveuser({ name: displayName, email });
+        await finduser();
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userName", displayName);
+        console.log("localStorage userEmail after set:", localStorage.getItem("userEmail"));
+        console.log("localStorage userName after set:", localStorage.getItem("userName"));
+        window.dispatchEvent(new Event("localStorageChanged"));
+        setTimeout(() => {
+          navigate('/');
+        }, 100);
+      } else {
+        alert("Google login failed.");
+      }
+    } catch (err) {
+      console.error("Google login error:", err.message);
+      alert("Google login failed.");
+    }
+  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-gray-900 via-black to-gray-800">
       <div className="relative bg-gray-800 text-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
-        
-        {/* X Button */}
+
+  
         <button
           onClick={() => navigate('/')}
           className="absolute top-4 right-4 text-gray-400 hover:text-purple-500 transition text-2xl font-bold"
@@ -69,6 +108,12 @@ function Login() {
               className="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-3 rounded-lg transition duration-300"
             >
               Submit
+            </button>
+            <h3>Or</h3>
+            <button
+              onClick={handleGoogleSignIn}
+              className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-lg transition duration-300">
+              Login with Google
             </button>
             <p
               onClick={() => navigate('/signup')}

@@ -1,4 +1,4 @@
-// SearchBar.jsx
+
 import React from 'react';
 
 function SearchBar({ searchQuery, setSearchQuery, handleSearch, loading }) {

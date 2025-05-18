@@ -4,7 +4,8 @@ import Result from '../pages/Response';
 import Home from '../component/Home';
 import Signup from '../pages/Signup';
 import Login from '../pages/Login';
-import Header from '../component/Header';
+import History from '../pages/History';
+
 
 function Approutes() {
   const [userEmail, setUserEmail] = useState("");
@@ -15,6 +16,7 @@ function Approutes() {
       <Route path="/result" element={<Result />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/login" element={<Login />} />
+      <Route path="/history" element={<History />} />
     </Routes>
 
   )

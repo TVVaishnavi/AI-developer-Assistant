@@ -4,6 +4,7 @@ const jwt = require("jsonwebtoken");
 const createUser = async (req, res) => {
   try {
     const { name, email, password } = req.body;
+    const io = req.io;
 
     if (!email || !password || !name) {
       return res.status(400).json({ message: "Name, email, and password are required" });
@@ -14,7 +15,15 @@ const createUser = async (req, res) => {
       return res.status(400).json({ message: "Email already exists" });
     }
 
-    await userService.createUser({ name, email, password });
+    const newUser = await userService.createUser({ name, email, password }); 
+
+    if(io){
+      io.emit("userRegistered", {
+        name: newUser.name,
+        email: newUser.email,
+        id: newUser._id 
+      })
+    }
 
     return res.status(201).json({ message: "User created successfully" });
   } catch (error) {
@@ -25,27 +34,41 @@ const createUser = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-      const { email, password } = req.body;
+    const { email, password } = req.body;
+    const io = req.io;
 
-      if (!email || !password) {
-          return res.status(400).json({ message: "Email and password are required" });
-      }
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email and password are required" });
+    }
 
-      const user = await userService.login(email, password);
-      if (!user) {
-          return res.status(401).json({ message: "Invalid credentials" });
-      }
+    const user = await userService.login(email, password);
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-      res.json({ message: "Login successful", result: user });
+    if(io){
+      io.emit("userLoggedIn",{
+        name: user.name, 
+        email: user.email,
+      })
+    }
+
+    return res.json({
+      token: user.token,
+      name: user.name,
+      email: user.email,
+      status: true,
+    });
+
   } catch (err) {
-      
-      if (err.message === "Invalid credentials" || err.message === "invalid token") {
-          return res.status(401).json({ message: err.message });
-      }
-      console.error(err); 
-      res.status(500).json({ message: "Internal server error" });
+    if (err.message === "Invalid credentials" || err.message === "invalid token") {
+      return res.status(401).json({ message: err.message });
+    }
+    console.error(err);
+    return res.status(500).json({ message: "Internal server error" });
   }
 };
+
 
 const refreshToken = async (req, res) => {
   try {
