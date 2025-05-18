@@ -49,7 +49,7 @@ const authenticateTokenOptional = (req, res, next) => {
             req.user = null;
         } else {
             console.log("Decoded JWT payload:", user);
-            req.user = user; // Ensure the decoded user object is assigned here
+            req.user = user; 
         }
         next();
     });
