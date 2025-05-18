@@ -2,10 +2,6 @@
 
 ## Description
 
-```
-
-```
-
 CodeMuse AI is an AI-powered developer assistant that allows users to generate complete websites by simply providing detailed natural language prompts. The more specific the prompt, the better the resulting website.
 
 CodeMuse supports both authenticated users and guest users. However, only logged-in users can access their chat and project history.
